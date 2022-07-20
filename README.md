@@ -1,4 +1,4 @@
-Create php file in path: /usr/local/bin/
+Move php file to path: /usr/local/bin/
 to create /usr/local/bin/php
 
 Grant executable permissions: 'sudo chmod +x php'
