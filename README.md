@@ -1,6 +1,6 @@
-PHP executable for users who don't want to download PHP:
+##PHP executable for users who don't want to download PHP:
 
-Ubuntu:
+**Ubuntu:**
 Copy php-ubuntu file to path: /usr/local/bin/php
 
 `sudo cp -i ~/your-download-location/php-ubuntu /usr/local/bin/php`
@@ -11,13 +11,12 @@ Running 'php -v' the first time will bring down the image.
 
 Running 'php -v' a second time will give the php version.
 
-Mac:
+**Mac:**
 instructions coming soon
 
-Windows:
+**Windows:**
 instructions coming soon
 
 
-
-Changing PHP versions:
+**Changing PHP versions:**
 The container called for this project comes from https://hub.docker.com/_/php
