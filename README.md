@@ -1,7 +1,7 @@
 PHP executable for users who don't want to download PHP:
 
 Ubuntu:
-Copy php-ubuntu file to path to create /usr/local/bin/php
+Copy php-ubuntu file to path: /usr/local/bin/php
 
 `sudo cp -i ~/your-download-location/php-ubuntu /usr/local/bin/php`
 
