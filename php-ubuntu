@@ -3,4 +3,4 @@ docker run --rm -i \
 -v /home/{username}:/home/{username} \
 -v $PWD:/code \
 -w /code \
-php:8.2.8-alpine php "$@"
+php:8.3.22-alpine php "$@"
