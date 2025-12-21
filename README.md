@@ -34,8 +34,14 @@ Running 'php -v' a second time will give the php version.
 
 - If you prefer Podman, replace `docker` with `podman` and ensure your Podman setup supports macOS.
 
+
+
+
 **Windows:**
 instructions coming soon
+
+
+
 
 
 **Changing PHP versions:**
