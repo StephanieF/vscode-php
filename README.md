@@ -2,15 +2,23 @@
 
 **Ubuntu:**
 
-Copy the `php-ubuntu` file to `/usr/local/bin/php`:
+- Prerequisites: install Docker and ensure the Docker daemon is running.
 
-`sudo cp -i ~/your-download-location/php-ubuntu /usr/local/bin/php`
+- Add your user to the `docker` group so the wrapper can access Docker without `sudo`:
 
-Grant executable permissions:
+    `sudo usermod -aG docker $USER`
 
-`sudo chmod +x /usr/local/bin/php`
+    Then **log out and back in** (or run `newgrp docker`) for the group change to take effect.
 
-Running `php -v` the first time will pull the image. Running `php -v` a second time will show the PHP version.
+- Copy the `php-ubuntu` file to `/usr/local/bin/php`:
+
+    `sudo cp -i ~/your-download-location/php-ubuntu /usr/local/bin/php`
+
+- Grant executable permissions:
+
+    `sudo chmod +x /usr/local/bin/php`
+
+- Verify by running `php -v`. The first run will pull the PHP container image; subsequent runs will show the PHP version.
 
 **Mac:**
 
@@ -75,15 +83,24 @@ These steps remove the wrapper script and any locally cached `php` container ima
 ## PHP executable for users who don't want to download PHP:
 
 **Ubuntu:**
-Copy php-ubuntu file to path: /usr/local/bin/php
 
-`sudo cp -i ~/your-download-location/php-ubuntu /usr/local/bin/php`
+- Prerequisites: install Docker and ensure the Docker daemon is running.
 
-Grant executable permissions: `sudo chmod +x /usr/local/bin/php`
+- Add your user to the `docker` group so the wrapper can access Docker without `sudo`:
 
-Running 'php -v' the first time will bring down the image.
+    `sudo usermod -aG docker $USER`
 
-Running 'php -v' a second time will give the php version.
+    Then **log out and back in** (or run `newgrp docker`) for the group change to take effect.
+
+- Copy the `php-ubuntu` file to `/usr/local/bin/php`:
+
+    `sudo cp -i ~/your-download-location/php-ubuntu /usr/local/bin/php`
+
+- Grant executable permissions:
+
+    `sudo chmod +x /usr/local/bin/php`
+
+- Verify by running `php -v`. The first run will pull the PHP container image; subsequent runs will show the PHP version.
 
 
 **Mac:**
