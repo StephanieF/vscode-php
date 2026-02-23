@@ -1,6 +1,6 @@
 #!/bin/bash
 docker run --rm -i \
--v /home/{username}:/home/{username} \
+-v /home/${USERNAME}:/home/${USERNAME} \
 -v $PWD:/code \
 -w /code \
 php:8.4.18-zts-alpine3.22 php "$@"
