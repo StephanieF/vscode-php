@@ -1,18 +1,24 @@
 ## PHP executable for users who don't want to download PHP:
 
-**Ubuntu:**
+**Linux / Mac (`php-unix`):**
 
-- Prerequisites: install Docker and ensure the Docker daemon is running.
+- Prerequisites: install Docker (Docker Desktop on Mac, or Docker Engine on Linux) and ensure the Docker daemon is running. On Mac, Colima + Docker also works.
 
-- Add your user to the `docker` group so the wrapper can access Docker without `sudo`:
+- **Linux only:** add your user to the `docker` group so the wrapper can access Docker without `sudo`:
 
     `sudo usermod -aG docker $USER`
 
     Then **log out and back in** (or run `newgrp docker`) for the group change to take effect.
 
-- Copy the `php-ubuntu` file to `/usr/local/bin/php`:
+- Copy the `php-unix` file to a directory on your `PATH`, named `php`. Common destinations:
 
-    `sudo cp -i ~/your-download-location/php-ubuntu /usr/local/bin/php`
+    - Linux, or Intel Mac: `/usr/local/bin`
+
+        `sudo cp -i ~/your-download-location/php-unix /usr/local/bin/php`
+
+    - Homebrew on Apple Silicon (if you use Homebrew): `/opt/homebrew/bin`
+
+        `sudo cp -i ~/your-download-location/php-unix /opt/homebrew/bin/php`
 
 - Grant executable permissions:
 
@@ -20,42 +26,39 @@
 
 - Verify by running `php -v`. The first run will pull the PHP container image; subsequent runs will show the PHP version.
 
-**Mac:**
+- If you prefer Podman, replace `docker` with `podman` in the script and ensure your Podman setup supports your OS.
 
-- Prerequisites: install Docker Desktop (or Colima + Docker) and ensure Docker is running.
+**Windows (`php-windows.cmd`):**
 
-- Copy the `php-ubuntu` helper to a directory on your `PATH`. Common destinations:
+- Prerequisites: install Docker Desktop and ensure it's running, with the Linux containers backend enabled (the default).
 
-    - Intel macOS or general: `/usr/local/bin`
+- Copy `php-windows.cmd` to a directory on your `PATH`, renamed to `php.cmd`. For example, create `C:\tools\php` and copy it there:
 
-        `sudo cp -i ~/your-download-location/php-ubuntu /usr/local/bin/php`
+    ```bat
+    mkdir C:\tools\php
+    copy php-windows.cmd C:\tools\php\php.cmd
+    ```
 
-    - Homebrew on Apple Silicon (if you use Homebrew): `/opt/homebrew/bin`
+- Add that directory to your `PATH` (System Properties → Environment Variables, or from an elevated PowerShell prompt):
 
-        `sudo cp -i ~/your-download-location/php-ubuntu /opt/homebrew/bin/php`
+    ```bat
+    setx PATH "%PATH%;C:\tools\php"
+    ```
 
-- Make the helper executable:
+    Then open a new terminal window for the change to take effect. (If you'd rather not risk `setx` truncating a long `PATH`, add the directory instead via System Properties → Environment Variables → Edit.)
 
-    `sudo chmod +x /usr/local/bin/php`
-
-- Verify by running `php -v`. The first run will pull the PHP container image; subsequent runs will show the PHP version.
-
-- If you prefer Podman, replace `docker` with `podman` and ensure your Podman setup supports macOS.
-
-**Windows:**
-
-Instructions coming soon.
-
+- Verify by running `php -v` from Command Prompt or PowerShell. The first run will pull the PHP container image; subsequent runs will show the PHP version.
 
 **Changing PHP versions:**
 
-The container used for this project comes from https://hub.docker.com/_/php
+The container used for this project comes from https://hub.docker.com/_/php. Edit the image tag (e.g. `php:8.4.18-zts-alpine3.22`) inside the wrapper script for your platform to change versions.
 
 **Uninstall / Remove**
 
 - **Remove the wrapper script:**
 
-    - Delete the `php` helper copied to `/usr/local/bin`: `sudo rm -f /usr/local/bin/php`
+    - Linux/Mac: `sudo rm -f /usr/local/bin/php` (or `/opt/homebrew/bin/php` on Apple Silicon Homebrew installs)
+    - Windows: delete `php.cmd` from the directory you added to `PATH` (e.g. `C:\tools\php`)
 
 - **Remove containers created from the `php` image:**
 
@@ -66,6 +69,8 @@ The container used for this project comes from https://hub.docker.com/_/php
     - Remove stopped containers created from the `php` image:
 
         `docker rm $(docker ps -a --filter ancestor=php -q)`
+
+    (On Windows, run the equivalent `docker ps` / `docker stop` / `docker rm` commands directly, since `$()` command substitution isn't available in Command Prompt.)
 
 - **Remove the local `php` image (optional):**
 
@@ -78,92 +83,5 @@ The container used for this project comes from https://hub.docker.com/_/php
 - **Quick cleanup (destructive):**
 
     - Remove all unused images, containers and networks (careful): `docker system prune -a`
-
-These steps remove the wrapper script and any locally cached `php` container images/containers. Only run the image-removal commands if you know you no longer need the pulled PHP images.
-## PHP executable for users who don't want to download PHP:
-
-**Ubuntu:**
-
-- Prerequisites: install Docker and ensure the Docker daemon is running.
-
-- Add your user to the `docker` group so the wrapper can access Docker without `sudo`:
-
-    `sudo usermod -aG docker $USER`
-
-    Then **log out and back in** (or run `newgrp docker`) for the group change to take effect.
-
-- Copy the `php-ubuntu` file to `/usr/local/bin/php`:
-
-    `sudo cp -i ~/your-download-location/php-ubuntu /usr/local/bin/php`
-
-- Grant executable permissions:
-
-    `sudo chmod +x /usr/local/bin/php`
-
-- Verify by running `php -v`. The first run will pull the PHP container image; subsequent runs will show the PHP version.
-
-
-**Mac:**
-
-- Prerequisites: install Docker Desktop (or Colima + Docker) and ensure Docker is running.
-
-- Copy the `php-ubuntu` helper to a directory on your PATH. Common destinations:
-
-	- Intel macOS or general: `/usr/local/bin`
-
-		`sudo cp -i ~/your-download-location/php-ubuntu /usr/local/bin/php`
-
-	- Homebrew on Apple Silicon (if you use Homebrew): `/opt/homebrew/bin`
-
-		`sudo cp -i ~/your-download-location/php-ubuntu /opt/homebrew/bin/php`
-
-- Make the helper executable:
-
-	`sudo chmod +x /usr/local/bin/php`
-
-- Verify by running `php -v`. The first run will pull the PHP container image; subsequent runs will show the PHP version.
-
-- If you prefer Podman, replace `docker` with `podman` and ensure your Podman setup supports macOS.
-
-
-
-
-**Windows:**
-instructions coming soon
-
-
-
-
-
-**Changing PHP versions:**
-The container called for this project comes from https://hub.docker.com/_/php
-
-**Uninstall / Remove**
-
-- **Remove the wrapper script:**
-
-	- Delete the `php` helper copied to `/usr/local/bin`: `sudo rm -f /usr/local/bin/php`
-
-- **Remove containers created from the `php` image:**
-
-	- Stop running containers created from the `php` image (if any):
-
-		`docker stop $(docker ps --filter ancestor=php -q)`
-
-	- Remove stopped containers created from the `php` image:
-
-		`docker rm $(docker ps -a --filter ancestor=php -q)`
-
-- **Remove the local `php` image (optional):**
-
-	- List `php` images: `docker images php`
-
-	- Remove by name or ID: `docker rmi php` or `docker rmi <IMAGE_ID>`
-
-- **Alternative (Podman):** replace `docker` with `podman` in the commands above.
-
-- **Quick cleanup (destructive):**
-
-	- Remove all unused images, containers and networks (careful): `docker system prune -a`
 
 These steps remove the wrapper script and any locally cached `php` container images/containers. Only run the image-removal commands if you know you no longer need the pulled PHP images.

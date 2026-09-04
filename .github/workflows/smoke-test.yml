@@ -1,0 +1,90 @@
+name: Smoke test wrapper scripts
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unix:
+    # No GitHub-hosted macOS runner supports Docker (no nested virtualization),
+    # so this is the closest available proxy for php-unix on Mac: it's the same
+    # script and the same $HOME/$PWD semantics, just exercised on Linux.
+    name: php-unix (Linux / Mac proxy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make wrapper executable
+        run: chmod +x php-unix
+
+      - name: php -v works and reports the expected version
+        run: ./php-unix -v | grep -q 'PHP 8.4'
+
+      - name: $HOME is actually mounted into the container
+        run: |
+          marker="$HOME/ci-smoke-marker-$$"
+          echo hello > "$marker"
+          "$GITHUB_WORKSPACE/php-unix" -r '
+            if (!file_exists($argv[1])) {
+              fwrite(STDERR, "home mount failed: " . $argv[1] . PHP_EOL);
+              exit(1);
+            }
+            echo "home mount ok" . PHP_EOL;
+          ' "$marker"
+          rm "$marker"
+
+      - name: Current directory is mounted at /code and used as the workdir
+        run: |
+          workdir=$(mktemp -d)
+          cd "$workdir"
+          echo '<?php echo getcwd(), PHP_EOL;' > check.php
+          out=$("$GITHUB_WORKSPACE/php-unix" check.php)
+          if [ "$out" != "/code" ]; then
+            echo "expected cwd /code, got '$out'" >&2
+            exit 1
+          fi
+
+  windows:
+    name: php-windows.cmd
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # GitHub's Windows runners default Docker to Windows containers; the php
+      # image is Linux-based (alpine), so we need to switch daemons first.
+      - name: Switch Docker Desktop to Linux containers
+        shell: pwsh
+        run: '& "$Env:ProgramFiles\Docker\Docker\DockerCli.exe" -SwitchDaemon'
+
+      - name: php -v works and reports the expected version
+        shell: pwsh
+        run: |
+          $out = & "$env:GITHUB_WORKSPACE\php-windows.cmd" -v
+          if ($out -notmatch 'PHP 8\.4') {
+            Write-Error "unexpected version output: $out"
+            exit 1
+          }
+
+      - name: '%USERPROFILE% is actually mounted into the container'
+        shell: pwsh
+        run: |
+          $marker = Join-Path $env:USERPROFILE "ci-smoke-marker-$PID.txt"
+          Set-Content -Path $marker -Value "hello"
+          $containerPath = "/home/$env:USERNAME/ci-smoke-marker-$PID.txt"
+          & "$env:GITHUB_WORKSPACE\php-windows.cmd" -r "if (!file_exists('$containerPath')) { fwrite(STDERR, 'home mount failed: $containerPath' . PHP_EOL); exit(1); } echo 'home mount ok' . PHP_EOL;"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Remove-Item $marker
+
+      - name: Current directory is mounted at /code and used as the workdir
+        shell: pwsh
+        run: |
+          $workdir = Join-Path $env:RUNNER_TEMP "smoke-cwd"
+          New-Item -ItemType Directory -Path $workdir | Out-Null
+          Set-Location $workdir
+          Set-Content -Path check.php -Value '<?php echo getcwd(), PHP_EOL;'
+          $out = & "$env:GITHUB_WORKSPACE\php-windows.cmd" check.php
+          if ($out.Trim() -ne '/code') {
+            Write-Error "expected cwd /code, got '$out'"
+            exit 1
+          }
