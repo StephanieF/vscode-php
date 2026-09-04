@@ -82,7 +82,10 @@ jobs:
       - name: php -v works and reports the expected version
         shell: pwsh
         run: |
-          $out = & "$env:GITHUB_WORKSPACE\php-windows.cmd" -v
+          # `& cmd` returns multi-line output as a string array, and -match /
+          # -notmatch against an array filters elements rather than returning
+          # a bool — joining to a single string first avoids that trap.
+          $out = (& "$env:GITHUB_WORKSPACE\php-windows.cmd" -v) -join "`n"
           if ($out -notmatch 'PHP 8\.4') {
             Write-Error "unexpected version output: $out"
             exit 1
@@ -105,8 +108,8 @@ jobs:
           New-Item -ItemType Directory -Path $workdir | Out-Null
           Set-Location $workdir
           Set-Content -Path check.php -Value '<?php echo getcwd(), PHP_EOL;'
-          $out = & "$env:GITHUB_WORKSPACE\php-windows.cmd" check.php
-          if ($out.Trim() -ne '/code') {
+          $out = ((& "$env:GITHUB_WORKSPACE\php-windows.cmd" check.php) -join "`n").Trim()
+          if ($out -ne '/code') {
             Write-Error "expected cwd /code, got '$out'"
             exit 1
           }

@@ -49,6 +49,8 @@
 
 - Verify by running `php -v` from Command Prompt or PowerShell. The first run will pull the PHP container image; subsequent runs will show the PHP version.
 
+- If `php -v` fails with an image/platform error, Docker Desktop may be set to Windows containers instead of Linux containers (the `php` image is Linux-based). Right-click the Docker Desktop tray icon and choose **Switch to Linux containers...**, then try again.
+
 **Changing PHP versions:**
 
 The container used for this project comes from https://hub.docker.com/_/php. Edit the image tag (e.g. `php:8.4.18-zts-alpine3.22`) inside the wrapper script for your platform to change versions.
@@ -62,15 +64,17 @@ The container used for this project comes from https://hub.docker.com/_/php. Edi
 
 - **Remove containers created from the `php` image:**
 
+    The wrapper scripts run with `--rm`, so containers are normally cleaned up automatically as soon as they exit. These commands only matter if one was killed abnormally (e.g. the host crashed mid-run) and got left behind.
+
     - Stop running containers created from the `php` image (if any):
 
-        `docker stop $(docker ps --filter ancestor=php -q)`
+        `docker stop $(docker ps --filter ancestor=php:8.4.18-zts-alpine3.22 -q)`
 
     - Remove stopped containers created from the `php` image:
 
-        `docker rm $(docker ps -a --filter ancestor=php -q)`
+        `docker rm $(docker ps -a --filter ancestor=php:8.4.18-zts-alpine3.22 -q)`
 
-    (On Windows, run the equivalent `docker ps` / `docker stop` / `docker rm` commands directly, since `$()` command substitution isn't available in Command Prompt.)
+    (The `ancestor` filter needs the full `image:tag` — a bare `ancestor=php` matches nothing unless you're on the `:latest` tag, which this project doesn't use. Match the tag to whatever version you're actually running; see "Changing PHP versions" above. On Windows, run the equivalent `docker ps` / `docker stop` / `docker rm` commands directly, since `$()` command substitution isn't available in Command Prompt.)
 
 - **Remove the local `php` image (optional):**
 
@@ -85,3 +89,13 @@ The container used for this project comes from https://hub.docker.com/_/php. Edi
     - Remove all unused images, containers and networks (careful): `docker system prune -a`
 
 These steps remove the wrapper script and any locally cached `php` container images/containers. Only run the image-removal commands if you know you no longer need the pulled PHP images.
+
+**Continuous Integration**
+
+[`.github/workflows/smoke-test.yml`](.github/workflows/smoke-test.yml) runs both wrapper scripts against the real `php` Docker image on every push and pull request — not just that they run, but that the `$HOME`/`%USERPROFILE%` and `$PWD`/`%CD%` mounts actually land where they're supposed to. The Linux job doubles as the closest available check for `php-unix` on Mac too, since GitHub-hosted macOS runners don't support Docker at all (no nested virtualization) — Mac itself isn't CI-tested.
+
+The Windows job (`php-windows.cmd`) took a few iterations to get working, for reasons worth recording:
+
+1. `windows-latest` runners ship a Docker Engine defaulted to **Windows containers**, not Linux containers, so the `php` (Linux/Alpine-based) image can't run until that's switched.
+2. There's no Docker Desktop installed on that runner image to do the switch with — only the underlying Moby engine — so the fix is to install Docker Desktop in the job itself and wait for its Linux engine to come up before running anything.
+3. Once that was working, the job still failed — but the failure was in the test script, not the wrapper: `$out = & command` in PowerShell returns multi-line output as a string array, and `-match`/`-notmatch` against an array filters elements rather than returning a boolean. A "no line matches" result rendered as a non-empty (truthy) array, so the check false-failed even though `php -v` had printed the correct version. Fixed by joining the output to a single string before matching.
