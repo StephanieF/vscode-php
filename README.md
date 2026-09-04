@@ -1,5 +1,7 @@
 ## PHP executable for users who don't want to download PHP:
 
+[![Smoke test](https://github.com/StephanieF/vscode-php/actions/workflows/smoke-test.yml/badge.svg)](https://github.com/StephanieF/vscode-php/actions/workflows/smoke-test.yml)
+
 **Linux / Mac (`php-unix`):**
 
 - Prerequisites: install Docker (Docker Desktop on Mac, or Docker Engine on Linux) and ensure the Docker daemon is running. On Mac, Colima + Docker also works.
