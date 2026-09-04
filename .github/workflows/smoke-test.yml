@@ -51,11 +51,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # GitHub's Windows runners default Docker to Windows containers; the php
-      # image is Linux-based (alpine), so we need to switch daemons first.
-      - name: Switch Docker Desktop to Linux containers
+      # GitHub's Windows runners ship plain Docker Engine (Moby), already
+      # configured for Linux containers by default — no daemon switch needed.
+      # This step just makes a misconfigured runner fail with a clear message
+      # instead of a confusing docker-run error two steps later.
+      - name: Confirm Docker is set up for Linux containers
         shell: pwsh
-        run: '& "$Env:ProgramFiles\Docker\Docker\DockerCli.exe" -SwitchDaemon'
+        run: |
+          $osType = docker info --format '{{.OSType}}'
+          if ($osType -ne 'linux') {
+            Write-Error "Docker is running '$osType' containers, expected 'linux'"
+            exit 1
+          }
 
       - name: php -v works and reports the expected version
         shell: pwsh
