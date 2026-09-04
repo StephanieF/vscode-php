@@ -48,20 +48,35 @@ jobs:
   windows:
     name: php-windows.cmd
     runs-on: windows-latest
+    # windows-latest ships plain Docker Engine (Moby) defaulted to Windows
+    # containers; the php image is Linux-based, so this job installs Docker
+    # Desktop for a real Linux-container engine. That install + startup is
+    # slow and occasionally flaky on hosted Windows runners — this timeout
+    # keeps a hang from burning CI minutes indefinitely.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
-      # GitHub's Windows runners ship plain Docker Engine (Moby), already
-      # configured for Linux containers by default — no daemon switch needed.
-      # This step just makes a misconfigured runner fail with a clear message
-      # instead of a confusing docker-run error two steps later.
-      - name: Confirm Docker is set up for Linux containers
+      - name: Install Docker Desktop
+        shell: pwsh
+        run: choco install docker-desktop --no-progress -y
+
+      - name: Start Docker Desktop and wait for its Linux engine to be ready
         shell: pwsh
         run: |
-          $osType = docker info --format '{{.OSType}}'
-          if ($osType -ne 'linux') {
-            Write-Error "Docker is running '$osType' containers, expected 'linux'"
-            exit 1
+          Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+          $deadline = (Get-Date).AddMinutes(10)
+          while ($true) {
+            $osType = docker info --format '{{.OSType}}' 2>$null
+            if ($LASTEXITCODE -eq 0 -and $osType -eq 'linux') {
+              Write-Host "Docker ready (OSType=$osType)"
+              break
+            }
+            if ((Get-Date) -ge $deadline) {
+              Write-Error "Docker Desktop did not report a Linux engine within 10 minutes (last OSType: '$osType')"
+              exit 1
+            }
+            Start-Sleep -Seconds 5
           }
 
       - name: php -v works and reports the expected version
